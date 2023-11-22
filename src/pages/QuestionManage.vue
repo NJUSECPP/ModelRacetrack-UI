@@ -28,7 +28,7 @@
             <q-btn outline dense @click="showQuestion(item)" color="green-10">查看详情</q-btn>
             <q-btn outline dense @click="editQuestion(item)" color="pink-10">编辑</q-btn>
             <q-btn outline dense @click="manageTestcase(item)" color="purple-10">用例管理</q-btn>
-            <q-btn outline dense color="red-10" @click="deleteQuestion(item.id)">删除</q-btn>
+            <q-btn outline dense color="red-10" @click="deleteQuestion(item.questionId)">删除</q-btn>
           </q-card-actions>
         </q-card>
       </div>
@@ -52,9 +52,10 @@
 
 <script>
 import { defineComponent } from 'vue';
-import {batchDeleteTestcases, deleteQuestionById, getAllQuestions} from "src/api/questionApi";
-import QuestionInfo from "components/QuestionInfo.vue";
+import {deleteQuestionById, getAllQuestions} from "src/api/questionApi";
+
 import {showInfo, showWarn} from "src/libs/message";
+import QuestionInfo from "src/components/QuestionInfo.vue";
 
 export default defineComponent({
   name: 'QuestionManage',

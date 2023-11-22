@@ -17,7 +17,7 @@ export const updateQuestionById = (question) => {
 }
 
 export const deleteQuestionById = (questionId) => {
-  return request.postRequest('/question/update', {questionId});
+  return request.postRequest('/question/delete', {questionId});
 }
 
 export const batchInsertTestcases = (questionId, testcases) => {

@@ -15,10 +15,12 @@
     "@quasar/cli": "^2.3.0",
     "@quasar/extras": "^1.16.4",
     "axios": "^1.2.1",
+    "highlight.js": "^11.9.0",
     "jschardet": "^3.0.0",
-    "marked": "^9.1.4",
+    "marked": "^9.1.6",
     "papaparse": "^5.4.1",
     "quasar": "^2.6.0",
+    "uuid": "^9.0.1",
     "vue": "^3.0.0",
     "vue-router": "^4.0.0",
     "vuex": "^4.0.1"

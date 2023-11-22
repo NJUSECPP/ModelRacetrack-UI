@@ -25,10 +25,6 @@
 
 <script>
 import {defineComponent} from 'vue'
-import {hideLoading, showLoading} from "src/libs/loading";
-import {mapGetters} from "vuex";
-import {getAllModels} from "src/api/modelApi";
-import {getAllQuestions} from "src/api/questionApi";
 import {showInfo} from "src/libs/message";
 
 export default defineComponent({

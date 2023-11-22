@@ -97,8 +97,8 @@ function getMessages(onMessage) {
     const valueOffset = fieldLength + (line[fieldLength + 1] === 32 ? 2 : 1);
     let obj = {};
     try {
-      const value = decoder.decode(line.subarray(valueOffset))
-        .replace(/\r/g,"\\r")
+      let value = decoder.decode(line.subarray(valueOffset))
+      value = value.replace(/\r/g,"\\r")
         .replace(/\n/g,"\\n")
       obj = JSON.parse(value);
     }catch (error) {
@@ -117,6 +117,8 @@ export const requestEventSourceJSON = async (api, params, onMessage) => {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(params)
+  }).catch(() => {
+    return null;
   })
   if(!response || response.status !== 200){
     if(response && response.status >= 500) {

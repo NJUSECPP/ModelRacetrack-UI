@@ -1,7 +1,7 @@
 <template>
   <q-page class="q-ma-none">
     <div class="full-width row">
-      <div class="col-3 no-border text-secondary" style="background-color: #e5e4e4;min-width: 400px">
+      <div class="col-3 no-border text-secondary" style="background-color: #e5e4e4;">
         <div class="bg-accent full-width q-px-lg q-pb-sm"
              style="height: 50px;border-bottom: 1px solid #ececec;border-right: 1px solid #ececec;">
           <q-input style="font-size: small" v-model="modelKeyword" :dense="true" @change="changeModelKeyword"
@@ -31,7 +31,7 @@
             </q-item-section>
           </q-item>
         </q-list>
-        <div class="q-pa-lg flex flex-center justify-center" style="height: 70px">
+        <div class="q-pa-lg flex flex-center justify-center" style="height: 150px">
           <q-pagination
             v-model="modelPageIndex"
             :max="(modelTotal - 1) / modelPageSize + 1"
@@ -41,100 +41,103 @@
             @update:model-value="pageLoad"
           />
           <div class="q-px-sm text-indigo-10 text-bold">每页数量：</div>
-          <q-select v-model="modelPageSize" color="indigo-10" dense :options="[20,10,5]" @update:model-value="pageLoad(1)"/>
+          <q-select v-model="modelPageSize" color="indigo-10" dense :options="[20,10,5]"
+                    @update:model-value="pageLoad(1)"/>
         </div>
       </div>
       <div class="col-9">
-      <div v-show="this.activatedModelId !== -1" class="bg-accent ChatHeight">
-        <q-scroll-area ref="scrollAreaRef" class="full-width ChatHeight">
-          <div class="row justify-center q-pa-lg"
-               v-for="message in (this.sessions[activatedModelId] ? this.sessions[activatedModelId].messages : [])">
-            <q-chat-message
-              class="q-ma-lg col-12"
-              v-if="message.type !== MESSAGE_TYPE.SYSTEM"
-              :avatar="message.type === MESSAGE_TYPE.SENT? getPublicUrl('logo/user.png'):getPublicUrl('logo/ai.png')"
-              text-color="black"
-              :bg-color="message.type === MESSAGE_TYPE.SENT?'positive':'white'"
-              :sent="message.type === MESSAGE_TYPE.SENT"
-            >
-              <q-spinner-dots size="2rem" v-if="message.content.length === 0"/>
-              <div style="white-space:pre-line;word-break:break-word;margin-top: 5px;margin-bottom: 5px;">
-                {{ message.content }}
-              </div>
-            </q-chat-message>
-            <q-card
-              v-else
-              class="bg-white col-6"
-            >
-              <q-card-section>
-                <div :class="['text-h4', 'text-'+RESULT_COLORS[message.result]]">
-                  {{ this.RESULT_TIPS[message.result] }}
-                </div>
-                <div v-if="message.content.length > 0" class="text-body1 q-py-md">{{ message.content }}</div>
-              </q-card-section>
-            </q-card>
-          </div>
-        </q-scroll-area>
-      </div>
-      <div v-if="this.sessions[activatedModelId]" class="bg-accent full-width"
-           style="border-top: 2px solid #ececec;">
-        <div class="full-width q-px-md" style="height: 251px;">
-          <div class="full-width row" style="height: 45px;">
-            <q-btn class=" q-mx-md" flat dense icon="settings" :disable="this.sessions[activatedModelId].waiting"
-                   v-if="this.sessions[activatedModelId].freedomMode"
-                   @click="showSetting=true;"></q-btn>
-            <div v-else>
-              <q-select
-                :disable="this.sessions[activatedModelId].waiting"
-                dense
-                style="width: 300px"
-                use-input
-                v-model="this.sessions[activatedModelId].activatedQuestion"
-                hide-selected
-                fill-input
-                input-debounce="0"
-                :options="questionOptions"
-                option-label="name"
-                label="选择题目"
-                @filter="filterQuestion"
+        <div v-show="this.activatedModelId !== -1" class="bg-accent ChatHeight">
+          <q-scroll-area ref="scrollAreaRef" class="full-width ChatHeight">
+            <div class="row justify-center q-pa-lg"
+                 v-for="message in (this.sessions[activatedModelId] ? this.sessions[activatedModelId].messages : [])">
+              <q-chat-message
+                class="q-ma-lg col-12"
+                v-if="message.type !== MESSAGE_TYPE.SYSTEM"
+                :avatar="message.type === MESSAGE_TYPE.SENT? getPublicUrl('logo/user.png'):getPublicUrl('logo/ai.png')"
+                text-color="black"
+                :bg-color="message.type === MESSAGE_TYPE.SENT?'positive':'white'"
+                :sent="message.type === MESSAGE_TYPE.SENT"
               >
-                <template v-slot:no-option>
-                  <q-item>
-                    <q-item-section class="text-green-10">
-                      找不到题目
-                    </q-item-section>
-                  </q-item>
-                </template>
-
-                <template v-slot:option="scope">
-                  <q-item v-bind="scope.itemProps">
-                    <q-item-section>
-                      <q-item-label>{{ scope.opt.name }}</q-item-label>
-                    </q-item-section>
-                  </q-item>
-                </template>
-              </q-select>
+                <div style="white-space:normal;word-break:break-word;margin-top: 5px;margin-bottom: 5px;" v-html="message.htmlContent"></div>
+              </q-chat-message>
+              <q-card
+                v-else
+                class="bg-white col-6"
+              >
+                <q-card-section>
+                  <div :class="['text-h4', 'text-'+RESULT_COLORS[message.result]]">
+                    {{ this.RESULT_TIPS[message.result] }}
+                  </div>
+                  <div v-if="message.content.length > 0" class="text-body1 q-py-md">{{ message.content }}</div>
+                </q-card-section>
+              </q-card>
             </div>
-          </div>
-          <div class="full-width" style="height: 150px;">
-            <q-input style="height: 150px;" type="textarea" borderless standout
+            <div class="row justify-center" v-if="this.sessions[activatedModelId] ? this.sessions[activatedModelId].waiting : false">
+              <q-spinner-dots size="2rem"/>
+            </div>
+          </q-scroll-area>
+        </div>
+        <div v-if="this.sessions[activatedModelId]" class="bg-accent full-width"
+             style="border-top: 2px solid #ececec;">
+          <div class="full-width q-px-md" style="height: 251px;">
+            <div class="full-width row" style="height: 45px;">
+              <q-btn class=" q-mx-md" flat dense icon="settings" :disable="this.sessions[activatedModelId].waiting"
                      v-if="this.sessions[activatedModelId].freedomMode"
-                     v-model="this.sessions[activatedModelId].nextMessage"></q-input>
-            <div class="full-width questionDescBox" v-else>
-              {{ this.sessions[activatedModelId].activatedQuestion ? this.sessions[activatedModelId].activatedQuestion.description : "" }}
+                     @click="showSetting=true;"></q-btn>
+              <div v-else>
+                <q-select
+                  :disable="this.sessions[activatedModelId].waiting"
+                  dense
+                  style="width: 300px"
+                  use-input
+                  v-model="this.sessions[activatedModelId].activatedQuestion"
+                  hide-selected
+                  fill-input
+                  input-debounce="0"
+                  :options="questionOptions"
+                  option-label="name"
+                  label="选择题目"
+                  @filter="filterQuestion"
+                >
+                  <template v-slot:no-option>
+                    <q-item>
+                      <q-item-section class="text-green-10">
+                        找不到题目
+                      </q-item-section>
+                    </q-item>
+                  </template>
+
+                  <template v-slot:option="scope">
+                    <q-item v-bind="scope.itemProps">
+                      <q-item-section>
+                        <q-item-label>{{ scope.opt.name }}</q-item-label>
+                      </q-item-section>
+                    </q-item>
+                  </template>
+                </q-select>
+              </div>
             </div>
-          </div>
-          <div class="full-width row justify-end q-px-md q-py-sm" style="height: 56px;">
-            <q-btn v-if="this.sessions[activatedModelId].freedomMode" dense color="primary" class="col-1" label="发送"
-                   :disable="this.sessions[activatedModelId].waiting"
-                   @click="send"/>
-            <q-btn v-else dense color="primary" class="col-1" label="测试"
-                   :disable="this.sessions[activatedModelId].waiting"
-                   @click="test"/>
+            <div class="full-width" style="height: 150px;">
+              <q-input style="height: 150px;" type="textarea" borderless standout
+                       v-if="this.sessions[activatedModelId].freedomMode"
+                       v-model="this.sessions[activatedModelId].nextMessage"></q-input>
+              <div class="full-width questionDescBox" v-else>
+                {{
+                  this.sessions[activatedModelId].activatedQuestion ? this.sessions[activatedModelId].activatedQuestion.description : ""
+                }}
+              </div>
+            </div>
+            <div class="full-width row justify-end q-px-md q-py-sm" style="height: 56px;">
+              <q-btn v-if="this.sessions[activatedModelId].freedomMode" dense color="primary" class="col-1" label="发送"
+                     :disable="this.sessions[activatedModelId].waiting"
+                     @click="send"/>
+              <q-btn v-else dense color="primary" class="col-1" label="测试"
+                     :disable="this.sessions[activatedModelId].waiting"
+                     @click="test"/>
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </div>
     <q-dialog v-model="showSetting">
       <q-card style="width: 500px;background-color: rgba(255,255,255,0.9);backdrop-filter: blur(20px)"
@@ -152,10 +155,11 @@ import {defineComponent} from 'vue'
 import {showWarn} from "src/libs/message";
 import {marked} from "marked";
 import {MESSAGE_TYPE, RESULT_TYPE, RESULT_TIPS, RESULT_COLORS} from "src/config/constant";
-import {getAllModels} from "src/api/modelApi";
 import {getAllQuestions} from "src/api/questionApi";
 import {runWithOJ} from "src/api/runApi";
 import {getPublicUrl} from "src/libs/imgUrl";
+import {markdownToHtml} from "src/libs/markdown";
+import 'highlight.js/styles/googlecode.css';
 
 export default defineComponent({
   name: 'ManualTest',
@@ -210,7 +214,7 @@ export default defineComponent({
     active(reload) {
       this.$emit('refreshActive');
       this.resizeH();
-      if(reload){
+      if (reload) {
         this.pageLoad(1);
       }
     },
@@ -220,10 +224,10 @@ export default defineComponent({
       }
       this.$emit('showLoading')
       this.modelLoading = true;
-      getAllModels(this.modelKeyword, index, this.modelPageSize).then(data => {
+      this.$store.getters.getAllModels(this.modelKeyword, index, this.modelPageSize).then(data => {
         let activatedExists = false;
         this.models = data.models.reduce((obj, item) => {
-          if(item.id === this.activatedModelId){
+          if (item.id === this.activatedModelId) {
             activatedExists = true;
           }
           obj[item.id] = item;
@@ -231,7 +235,7 @@ export default defineComponent({
         }, {});
         this.modelTotal = data.total;
         this.modelPageIndex = index;
-        if(!activatedExists){
+        if (!activatedExists) {
           if (data.models.length > 0) {
             this.changeSession(data.models[0].id);
           } else {
@@ -254,7 +258,7 @@ export default defineComponent({
       }
       let mlhs = document.querySelectorAll(".ModelListHeight")
       for (let i = 0; i < mlhs.length; i++) {
-        mlhs[i].style.height = (this.ht - 173) + 'px'
+        mlhs[i].style.height = (this.ht - 253) + 'px'
       }
     },
 
@@ -324,10 +328,11 @@ export default defineComponent({
         showWarn("请先选择题目！");
         return;
       }
-      let questionId = question.id;
+      let questionId = question.questionId;
+      let modelName = this.models[modelId].name;
       this.startRun(modelId);
       let that = this;
-      runWithOJ(modelId, questionId,
+      runWithOJ(modelName, questionId,
         message => {
           if (Object.keys(message).length === 0) {
             that.appendMessage(modelId, "\n", isn);
@@ -360,16 +365,19 @@ export default defineComponent({
         type: type,
         result: result,
         content: content,
-      }
-      if (absIndex === this.sessions[modelId].maxMessageIndex) {
-        const abstract = (type === MESSAGE_TYPE.REPLY ? this.models[modelId].name + ":" : "") + content;
-        this.sessions[modelId].abstract = abstract.length < 24 ? abstract : abstract.slice(0, 24);
-        if (this.activatedModelId === modelId) {
-          this.scrollToEnd(true);
-        } else {
-          this.sessions[modelId].newReply = true;
+        htmlContent: markdownToHtml(content)
+      };
+      this.$nextTick(() => {
+        if (absIndex === this.sessions[modelId].maxMessageIndex) {
+          const abstract = (type === MESSAGE_TYPE.REPLY ? this.models[modelId].name + ":" : "") + content;
+          this.sessions[modelId].abstract = abstract.length < 24 ? abstract : abstract.slice(0, 24);
+          if (this.activatedModelId === modelId) {
+            this.scrollToEnd(true);
+          } else {
+            this.sessions[modelId].newReply = true;
+          }
         }
-      }
+      });
     },
     appendMessage(modelId, content, isn, index = -1, offset = -1) {
       if (!this.sessions[modelId]) {
@@ -392,7 +400,7 @@ export default defineComponent({
         oldContent = this.sessions[modelId].messages[absIndex].content;
       }
       this.sessions[modelId].messages[absIndex].content = oldContent + content;
-      let abstract = this.sessions[modelId].messages[absIndex].abstract;
+      this.sessions[modelId].messages[absIndex].htmlContent = markdownToHtml(oldContent+content);
       if (absIndex === this.sessions[modelId].maxMessageIndex) {
         const type = this.sessions[modelId].messages[absIndex].type;
         const abstract = (type === MESSAGE_TYPE.REPLY ? this.models[modelId].name + ":" : "")
@@ -414,15 +422,15 @@ export default defineComponent({
       }
     },
     changeModelKeyword() {
-      if(!this.modelLoading){
+      if (!this.modelLoading) {
         this.pageLoad(1);
       }
     },
 
     filterQuestion(val, update, abort) {
-      getAllQuestions(val, 1,2000).then(data => {
-        for(let item of data.questions){
-          this.questions[item.id] = item;
+      getAllQuestions(val, 1, 2000).then(data => {
+        for (let item of data.questions) {
+          this.questions[item.questionId] = item;
         }
         update(() => this.questionOptions = data.questions);
       }).catch(err => {
@@ -487,33 +495,5 @@ pre > code:before {
   background-repeat: no-repeat;
 }
 
-table {
-  background-color: #fff;
-  border-radius: 5px;
-  box-shadow: 0 1px 15px rgba(23, 114, 180, .3) !important;
-  margin: 1rem 1rem;
-  width: calc(100% - 2rem);
-  word-break: initial;
-  border-spacing: 0;
-  border-collapse: collapse;
-}
-
-tbody tr:hover {
-  background-color: rgba(23, 114, 180, .07);
-}
-
-td {
-  border-color: hsl(116, 0%, 89%);
-  text-align: center;
-  border-style: solid;
-  border-width: 1px 0;
-  padding: 0.75em 1em;
-
-}
-
-th {
-  padding: 0.75em 1em;
-  color: rgba(23, 114, 180, 1);
-}
 
 </style>

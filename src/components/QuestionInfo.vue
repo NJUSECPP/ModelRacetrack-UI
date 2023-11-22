@@ -16,7 +16,7 @@
             <q-item-section style="max-width: 250px; height: 56px">
               <q-item-label>题目id</q-item-label>
             </q-item-section>
-            <q-input color="green-10" v-model="question.id" borderless readonly style="min-width: 470px"
+            <q-input color="green-10" v-model="question.questionId" borderless readonly style="min-width: 470px"
                      :rules="[requireCheck]"/>
           </q-item>
           <q-item dense>
@@ -41,8 +41,8 @@
             <q-item-section style="max-width: 250px; height: 56px">
               <q-item-label>用例数量</q-item-label>
             </q-item-section>
-            <q-input color="green-10" v-model="testcaseTotal" borderless readonly style="min-width: 470px"
-                     :rules="[requireCheck]"/>
+            <q-input color="green-10" v-model="pagination.rowsNumber" borderless readonly style="min-width: 470px"
+                     :rules="[positiveCheck]"/>
           </q-item>
           <q-separator class="q-my-md"/>
           <q-item class="q-gutter-md justify-center ">
@@ -69,6 +69,7 @@
             hide-bottom
             selection="multiple"
             v-model:selected="selectedTestcases"
+            v-model:pagination="pagination"
             no-data-label="什么也没有"
           >
             <template v-slot:top>
@@ -80,15 +81,15 @@
         </div>
         <div class="q-pa-lg flex flex-center justify-center" style="height: 70px">
           <q-pagination
-            v-model="testcasePageIndex"
-            :max="(testcaseTotal - 1) / testcasePageSize + 1"
+            v-model="pagination.page"
+            :max="(pagination.rowsNumber - 1) / pagination.rowsPerPage + 1"
             :max-pages="6"
             color="purple-10"
             boundary-numbers
             @update:model-value="pageLoad"
           />
           <div class="q-px-md text-indigo-10 text-bold">每页数量：</div>
-          <q-select v-model="testcasePageSize" color="indigo-10" dense :options="[30,20,10,5]"
+          <q-select v-model="pagination.rowsPerPage" color="indigo-10" dense :options="[30,20,10,5]"
                     @update:model-value="pageLoad(1)"/>
         </div>
         <q-item class="q-gutter-md justify-center ">
@@ -98,7 +99,7 @@
 
     </q-tab-panels>
 
-    <TestcaseMaker ref="testcaseMaker" @refresh="pageLoad(testcasePageIndex)"/>
+    <TestcaseMaker ref="testcaseMaker" @refresh="pageLoad(pagination.page)"/>
 
     <q-inner-loading
       :showing="innerLoading"
@@ -144,9 +145,11 @@ export default defineComponent({
       },
 
       testcases: [],
-      testcasePageIndex: 1,
-      testcasePageSize: 10,
-      testcaseTotal: 0,
+      pagination: {
+        page: 1,
+        rowsPerPage: 5,
+        rowsNumber: 0
+      },
 
       selectedTestcases: [],
 
@@ -164,6 +167,8 @@ export default defineComponent({
         {name: 'tip', align: 'left', label: '提示', field: 'tipDesc', sortable: false, style: "width:250px", headerStyle: "width:250px"}
       ],
 
+
+
     }
   },
   methods: {
@@ -174,7 +179,7 @@ export default defineComponent({
       return true;
     },
     positiveCheck(val) {
-      if (!val || val.length === '') {
+      if (val === undefined || val === null) {
         return "不能为空";
       }
       if (val < 0) {
@@ -198,7 +203,7 @@ export default defineComponent({
       Object.assign(this.$data, this.$options.data.call(this))
       if(question){
         this.question = {
-          id: question.id,
+          questionId: question.questionId,
           name: question.name,
           description: question.description
         };
@@ -215,7 +220,7 @@ export default defineComponent({
         this.loading = true;
         insertQuestion(this.question).then(data => {
           showInfo("保存成功")
-          this.question.id = data.id;
+          this.question.questionId = data.questionId;
           this.pageLoad(1);
           this.action = this.ACTION_TYPE.SHOW;
           this.edited = true;
@@ -240,17 +245,17 @@ export default defineComponent({
     },
     pageLoad(index) {
       this.innerLoading = true;
-      getAllTestcasesByQuestionId(this.questionId, index, this.testcasePageSize).then(data => {
+      getAllTestcasesByQuestionId(this.question.questionId, index, this.pagination.rowsPerPage).then(data => {
         this.testcases = data.testcases;
         for(let testcase of this.testcases){
           testcase.inputDesc = this.getDesc(testcase.input, 20);
           testcase.outputDesc = this.getDesc(testcase.output, 20);
           testcase.tipDesc = this.getDesc(testcase.tip, 15);
         }
-        this.testcaseTotal = data.total;
-        this.testcasePageIndex = index;
+        this.pagination.rowsNumber = data.total;
+        this.pagination.page = index;
       }).catch(err => {
-        this.showWarn("请求用例数据时出错");
+        showWarn("请求用例数据时出错");
         this.backFromTestcase();
       }).finally(() => {
         this.innerLoading = false;
@@ -301,23 +306,24 @@ export default defineComponent({
           showWarn("删除失败!");
         }).finally(()=>{
           this.selectedTestcases = [];
-          this.pageLoad(this.testcasePageIndex);
+          this.pageLoad(this.pagination.page);
         })
       })
     },
     openMaker(multiple){
-      this.$refs.testcaseMaker.active(this.question.id, this.testcaseTotal !== 0, multiple);
+      this.$refs.testcaseMaker.active(this.question.questionId, multiple);
     }
   }
 })
 
 </script>
 
-<style scoped>
-.q-inner-loading{
+<style>
+.q-dialog__inner > .q-inner-loading{
   left: auto !important;
   right: auto !important;
   width: 800px !important;
   max-width: 100% !important;
 }
+
 </style>

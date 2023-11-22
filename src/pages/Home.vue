@@ -52,7 +52,6 @@
 import {defineComponent} from 'vue'
 import {hideLoading, showLoading} from "src/libs/loading";
 import {mapGetters} from "vuex";
-import {getAllModels} from "src/api/modelApi";
 import {getAllQuestions} from "src/api/questionApi";
 
 export default defineComponent({
@@ -67,10 +66,10 @@ export default defineComponent({
     }
   },
   methods: {
-    active() {
+    active: function () {
       this.$emit('refreshActive');
       this.$emit('showLoading');
-      Promise.all([getAllModels('',1, 1), getAllQuestions('',1, 1)]).then(datas => {
+      Promise.all([this.$store.getters.getAllModels('', 1, 1), getAllQuestions('', 1, 1)]).then(datas => {
         this.modelCount = datas[0].total;
         this.questionCount = datas[1].total;
       }).catch(err => {

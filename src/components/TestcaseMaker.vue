@@ -1,5 +1,5 @@
 <template>
-  <q-dialog v-model="showing" position="left" class="q-pa-none" :persistent="!hasOne">
+  <q-dialog v-model="showing" position="left" class="q-pa-none" persistent>
     <q-tab-panels
       v-model="mode"
       style="min-width: 500px;min-height: 600px"
@@ -13,7 +13,7 @@
           <q-item class="row q-pb-md">
             <q-item-label class="text-h5 col-9">新增用例</q-item-label>
             <q-btn flat dense color="purple-10" class="col-3" label="批量导入" :disable="loading"
-                   @click="active(questionId, hasOne, true)"/>
+                   @click="active(questionId, true)"/>
           </q-item>
           <q-item dense>
             <q-item-section style="max-width: 150px; height: 56px">
@@ -41,19 +41,31 @@
           </q-item>
           <q-separator class="q-my-md"/>
           <q-item class="q-gutter-md justify-center ">
-            <q-btn color="purple-10" v-if="hasOne" flat @click="close">返回</q-btn>
+            <q-btn color="purple-10" @click="saveSimple" :disable="loading">保存</q-btn>
+            <q-btn color="purple-10" flat @click="close" :disable="loading">返回</q-btn>
           </q-item>
         </q-form>
       </q-tab-panel>
       <q-tab-panel name="multiple">
         <q-item class="row q-pb-md">
           <q-item-label class="text-h5 col-9">批量导入</q-item-label>
-          <q-btn flat dense color="purple-10" class="col-3" label="新增用例" :disable="loading"
-                 @click="active(questionId, hasOne, false)"/>
+          <q-btn flat dense color="purple-10" class="col-3" label="新增单条用例" :disable="loading"
+                 @click="active(questionId, false)"/>
         </q-item>
         <q-item dense>
           <q-item-section style="max-width: 250px; height: 56px">
-            <q-item-label>选择CSV文件</q-item-label>
+            <q-item-label>
+              选择CSV文件
+              <span>
+              <q-badge rounded color="red">!</q-badge>
+              <q-tooltip anchor="top right" self="center middle" class="bg-accent text-secondary text-body2 shadow-4" :offset="[160,10]"
+                         transition-show="scale"
+                         transition-hide="scale"
+              >
+                至少需要<strong>input</strong>、<strong>output</strong>、<strong>tip</strong>三列，并带有标题行
+              </q-tooltip>
+            </span>
+            </q-item-label>
           </q-item-section>
           <q-file
             dense
@@ -64,7 +76,7 @@
             @update:model-value="checkCSV"
           />
         </q-item>
-        <q-scroll-area style="margin-top:10px; height: 404px;background-color:#333;">
+        <q-scroll-area style="margin-top:10px; height: 370px;background-color:#333;">
           <div class="text-accent typing bg-transparent" style="padding: 25px 20px 20px;"
                v-html="multipleCheckerShow"></div>
           <div v-if="showMultipleCheckerConfirm && !isTyping" class="row justify-center">
@@ -72,7 +84,9 @@
             <q-btn class="q-px-sm" flat color="accent" @click="this.multipleConfirmReject">算了</q-btn>
           </div>
         </q-scroll-area>
-
+        <q-item class="q-gutter-md justify-center ">
+          <q-btn color="purple-10" flat @click="close" :disable="loading">返回</q-btn>
+        </q-item>
       </q-tab-panel>
     </q-tab-panels>
   </q-dialog>
@@ -81,7 +95,6 @@
 <script>
 import {defineComponent} from "vue";
 import {showInfo, showWarn} from "src/libs/message";
-import {updateModelById} from "src/api/modelApi";
 import {batchInsertTestcases} from "src/api/questionApi";
 import {parseCSV} from "src/libs/csvPaser";
 
@@ -101,7 +114,7 @@ export default defineComponent({
         output: '',
         tip: '',
       },
-      selectedFile: "",
+      selectedFile: undefined,
       multipleTestcases: [],
 
       multipleCheckerX: 0,
@@ -113,25 +126,16 @@ export default defineComponent({
 
       isTyping: false,
 
-      hasOne: false,
-
-
     }
   },
   methods: {
     show(question) {
-      this.active(question, false, false);
+      this.active(question, false);
     },
-    active(questionId, hasOne, multiple) {
+    active(questionId, multiple) {
+      Object.assign(this.$data, this.$options.data.call(this))
       this.questionId = questionId
-      this.innerLoading = false;
-      this.testcase = {
-        input: '',
-        output: '',
-        tip: '',
-      }
       this.mode = multiple ? 'multiple' : 'simple';
-      this.hasOne = hasOne;
       this.showing = true;
     },
 

@@ -148,10 +148,7 @@
                 :bg-color="message.type === MESSAGE_TYPE.SENT?'positive':'white'"
                 :sent="message.type === MESSAGE_TYPE.SENT"
               >
-                <q-spinner-dots size="2rem" v-if="message.content.length === 0"/>
-                <div style="white-space:pre-line;word-break:break-word;margin-top: 5px;margin-bottom: 5px;">
-                  {{ message.content }}
-                </div>
+                <div style="white-space:normal;word-break:break-word;margin-top: 5px;margin-bottom: 5px;" v-html="message.htmlContent"></div>
               </q-chat-message>
               <q-card
                 v-else
@@ -165,12 +162,15 @@
                 </q-card-section>
                 <q-separator/>
                 <q-card-actions vertical>
-                  <q-btn flat color="primary" :loading="sessions[activatedModelId][activatedQuestionId] ?
+                  <q-btn flat color="primary" :loading="sessions[activatedModelId] && sessions[activatedModelId][activatedQuestionId] ?
                   sessions[activatedModelId][activatedQuestionId].waiting : false"
                          @click="runModelQuestion(activatedModelId, activatedQuestionId)">再来一次
                   </q-btn>
                 </q-card-actions>
               </q-card>
+            </div>
+            <div class="row justify-center" v-if="sessions[activatedModelId] && sessions[activatedModelId][activatedQuestionId] ? sessions[activatedModelId][activatedQuestionId].waiting : false">
+              <q-spinner-dots size="2rem"/>
             </div>
           </q-scroll-area>
         </div>
@@ -286,9 +286,10 @@ import {defineComponent} from 'vue'
 import {hideLoading, showLoading} from "src/libs/loading";
 import {MESSAGE_TYPE, RESULT_TYPE, RESULT_TIPS, RESULT_COLORS} from "src/config/constant";
 import {runWithOJ} from "src/api/runApi";
-import {getAllModels} from "src/api/modelApi";
 import {getAllQuestions} from "src/api/questionApi";
 import {getPublicUrl} from "src/libs/imgUrl";
+import {markdownToHtml} from "src/libs/markdown";
+import 'highlight.js/styles/googlecode.css';
 
 export default defineComponent({
   name: 'AutoTest',
@@ -449,9 +450,9 @@ export default defineComponent({
     },
 
     filterQuestion(val, update, abort) {
-      getAllQuestions(1,2000).then(data => {
+      getAllQuestions("", 1,2000).then(data => {
         for(let item of data.questions){
-          this.questions[item.id] = item;
+          this.questions[item.questionId] = item;
         }
         update(() => this.questionOptions = data.questions);
       }).catch(err => {
@@ -459,12 +460,12 @@ export default defineComponent({
       })
     },
     onAddUsingQuestion(detail) {
-      let questionId = detail.value.id;
+      let questionId = detail.value.questionId;
       this.usingQuestionIds.push(questionId);
       this.updateTips();
     },
     onRemoveUsingQuestion(detail) {
-      let questionId = detail.value.id;
+      let questionId = detail.value.questionId;
       this.removeUsingQuestion(questionId, false);
     },
     removeUsingQuestion(questionId, removeTemp = true) {
@@ -483,12 +484,12 @@ export default defineComponent({
       }
       this.updateRan();
       if (removeTemp) {
-        this.tempUsingQuestions = this.tempUsingQuestions.filter(v => v.id !== questionId);
+        this.tempUsingQuestions = this.tempUsingQuestions.filter(v => v.questionId !== questionId);
       }
     },
 
     filterModel(val, update, abort) {
-      getAllModels(val, 1,2000).then(data => {
+      this.$store.getters.getAllModels(val, 1,2000).then(data => {
         for(let item of data.models){
           this.models[item.id] = item;
         }
@@ -614,7 +615,8 @@ export default defineComponent({
       }
       this.startRun(modelId, questionId);
       let res = RESULT_TYPE.SUCCESS;
-      this.sessions[modelId][questionId].promise = runWithOJ(modelId, questionId,
+      let modelName = this.models[modelId].name;
+      this.sessions[modelId][questionId].promise = runWithOJ(modelName, questionId,
         message => {
           if(Object.keys(message).length === 0){
             that.appendMessage(modelId, questionId, "\n");
@@ -652,12 +654,15 @@ export default defineComponent({
         type: type,
         result: result,
         content: content,
-      }
-      if(index === this.sessions[modelId][questionId].maxMessageIndex) {
-        if (this.activatedModelId === modelId && this.activatedQuestionId === questionId) {
-          this.scrollToEnd(true);
+        htmlContent: markdownToHtml(content)
+      };
+      this.$nextTick(() => {
+        if (index === this.sessions[modelId][questionId].maxMessageIndex) {
+          if (this.activatedModelId === modelId && this.activatedQuestionId === questionId) {
+            this.scrollToEnd(true);
+          }
         }
-      }
+      });
     },
     appendMessage(modelId, questionId, content, index=-1, offset=-1) {
       if (!this.sessions[modelId][questionId]) {
@@ -672,12 +677,14 @@ export default defineComponent({
       if (this.sessions[modelId][questionId].messages[index].content.length < offset) {
         return;
       }
-      if(offset >= 0){
-        let oldContent = this.sessions[modelId][questionId].messages[index].content.slice(0, offset);
-        this.sessions[modelId][questionId].messages[index].content = oldContent + content;
-      }else {
-        this.sessions[modelId][questionId].messages[index].content += content;
+      let oldContent = "";
+      if (offset >= 0) {
+        oldContent = this.sessions[modelId][questionId].messages[index].content.slice(0, offset);
+      } else {
+        oldContent = this.sessions[modelId][questionId].messages[index].content;
       }
+      this.sessions[modelId][questionId].messages[index].content = oldContent + content;
+      this.sessions[modelId][questionId].messages[index].htmlContent = markdownToHtml(oldContent+content);
     }
   }
 })
@@ -691,5 +698,45 @@ export default defineComponent({
 .q-dialog__inner--right {
   padding-top: 0 !important;
   padding-bottom: 0 !important;
+}
+
+pre {
+  position: relative;
+}
+
+code {
+  margin: 0 0.15em;
+  padding: 0.125em 0.4em;
+  border-radius: 2px;
+  background: rgba(242, 107, 31, .07);
+  color: rgba(242, 107, 31, 1);
+  white-space: nowrap;
+  font-size: calc(1rem * 0.95);
+  line-height: inherit;
+}
+
+pre > code {
+  padding: 48px 18px 18px 12px !important;
+  font-size: 1rem;
+  box-shadow: 0 1px 15px rgba(23, 114, 180, .3) !important;
+  border-radius: 5px !important;
+  background: rgba(250, 250, 250, 1) !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+
+}
+
+pre > code:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 14px;
+  margin-top: 18px;
+  margin-bottom: 18px;
+  margin-left: 12px;
+  width: 100px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='54' height='14' viewBox='0 0 54 14'%3E%3Cg fill='none' fill-rule='evenodd' transform='translate(1 1)'%3E%3Ccircle cx='6' cy='6' r='6' fill='%23FF5F56' stroke='%23E0443E' stroke-width='.5'%3E%3C/circle%3E%3Ccircle cx='26' cy='6' r='6' fill='%23FFBD2E' stroke='%23DEA123' stroke-width='.5'%3E%3C/circle%3E%3Ccircle cx='46' cy='6' r='6' fill='%2327C93F' stroke='%231AAB29' stroke-width='.5'%3E%3C/circle%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: no-repeat;
 }
 </style>

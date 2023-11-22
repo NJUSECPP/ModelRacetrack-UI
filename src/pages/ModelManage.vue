@@ -16,13 +16,6 @@
           <q-card-section class="bg-indigo-10 text-accent q-px-xl q-py-md column">
             <div class="text-h6 q-mr-lg self-center">{{item.name}}</div>
           </q-card-section>
-
-          <q-separator/>
-
-          <q-card-actions align="center">
-            <q-btn outline dense @click="showModel(item)" color="indigo-10">查看详情</q-btn>
-            <q-btn outline dense @click="editModel(item)" color="pink-10">编辑</q-btn>
-          </q-card-actions>
         </q-card>
       </div>
     </q-scroll-area>
@@ -38,19 +31,14 @@
       <div class="q-px-md text-indigo-10 text-bold">每页数量：</div>
       <q-select v-model="modelPageSize" color="indigo-10" dense :options="[50,40,30,20,10,5]" @update:model-value="pageLoad(1)"/>
     </div>
-
-    <ModelInfo ref="modelInfo" @refresh="pageLoad(modelPageIndex)"></ModelInfo>
   </q-page>
 </template>
 
 <script>
 import { defineComponent } from 'vue'
-import ModelInfo from "components/ModelInfo.vue";
-import {getAllModels} from "src/api/modelApi";
 
 export default defineComponent({
   name: 'ModelMange',
-  components: {ModelInfo},
   created() {
     window.addEventListener('resize', () => {
       this.resizeH();
@@ -92,7 +80,7 @@ export default defineComponent({
       }
       this.$emit('showLoading')
       this.modelLoading = true;
-      getAllModels(this.modelKeyword, index, this.modelPageSize).then(data => {
+      this.$store.getters.getAllModels(this.modelKeyword, index, this.modelPageSize).then(data => {
         this.models = data.models;
         this.modelTotal = data.total;
         this.modelPageIndex = index;
@@ -108,12 +96,6 @@ export default defineComponent({
         this.pageLoad(1);
       }
     },
-    showModel(model){
-      this.$refs.modelInfo.show(model)
-    },
-    editModel(model){
-      this.$refs.modelInfo.edit(model)
-    }
   }
 })
 </script>
