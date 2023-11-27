@@ -110,32 +110,33 @@ function getMessages(onMessage) {
   };
 }
 
-export const requestEventSourceJSON = async (api, params, onMessage) => {
+async function request(api, params, onMessage, controller) {
   const response = await fetch(api, {
     method: 'post',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(params)
+    body: JSON.stringify(params),
+    signal: controller.signal
   }).catch(() => {
     return null;
   })
-  if(!response || response.status !== 200){
-    if(response && response.status >= 500) {
-      if(response && response.statusText){
-        return Promise.reject(new Error("服务端异常："+response.statusText));
-      }else {
+  if (!response || response.status !== 200) {
+    if (response && response.status >= 500) {
+      if (response && response.statusText) {
+        return Promise.reject(new Error("服务端异常：" + response.statusText));
+      } else {
         return Promise.reject(new Error("服务端异常"));
       }
-    }else if(response && response.status >= 400){
-      if(response && response.statusText){
-        return Promise.reject(new Error("请求异常："+response.statusText));
-      }else {
+    } else if (response && response.status >= 400) {
+      if (response && response.statusText) {
+        return Promise.reject(new Error("请求异常：" + response.statusText));
+      } else {
         return Promise.reject(new Error("请求异常"));
       }
-    }else if(response && response.statusText){
+    } else if (response && response.statusText) {
       return Promise.reject(new Error("系统异常：") + response.statusText);
-    }else {
+    } else {
       return Promise.reject(new Error("系统异常"));
     }
   }
@@ -143,3 +144,18 @@ export const requestEventSourceJSON = async (api, params, onMessage) => {
   await getBytes(response.body, getLines(getMessages(onMessage)));
   return Promise.resolve();
 }
+
+export const requestEventSourceJSON = (api, params, onMessage) => {
+  let controller = new AbortController();
+  let timeoutPromise = () => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        controller.abort(new Error("请求超时"));
+      }, 3 * 3 * 60 * 1000);
+    });
+  }
+  return Promise.race([timeoutPromise(), request(api, params, onMessage, controller)]);
+}
+
+
+

@@ -136,7 +136,7 @@
         </div>
         <div v-show="!showTips" class="bg-accent FullHeight">
           <q-scroll-area ref="scrollAreaRef" class="full-width FullHeight">
-            <div class="row justify-center q-pa-lg"
+            <div class="row justify-center q-px-lg"
                  v-for="message in (
                 sessions[activatedModelId] && sessions[activatedModelId][activatedQuestionId]
                 ? Object.values(sessions[activatedModelId][activatedQuestionId].messages) : [])">
@@ -152,7 +152,7 @@
               </q-chat-message>
               <q-card
                 v-else
-                class="bg-white col-6"
+                class="bg-white col-6 q-my-lg"
               >
                 <q-card-section>
                   <div :class="['text-h4', 'text-'+RESULT_COLORS[message.result]]">
@@ -653,9 +653,11 @@ export default defineComponent({
         index: index,
         type: type,
         result: result,
-        content: content,
-        htmlContent: markdownToHtml(content)
+        content: content
       };
+      if(type !== MESSAGE_TYPE.SYSTEM){
+        this.sessions[modelId][questionId].messages[index].htmlContent = markdownToHtml(content);
+      }
       this.$nextTick(() => {
         if (index === this.sessions[modelId][questionId].maxMessageIndex) {
           if (this.activatedModelId === modelId && this.activatedQuestionId === questionId) {
@@ -669,7 +671,7 @@ export default defineComponent({
         return;
       }
       if(index < 0){
-        index = this.sessions[modelId][questionId].maxMessageIndex;
+        index = this.sessions[modelId][questionId].maxMessageIndex + 1;
       }
       if (!this.sessions[modelId][questionId].messages[index]) {
         return;

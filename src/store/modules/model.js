@@ -4,6 +4,10 @@ const state = () => ({
     {
       id: 1,
       name: "StarCoder"
+    },
+    {
+      id: 2,
+      name: "Llama7b"
     }
   ]
 })

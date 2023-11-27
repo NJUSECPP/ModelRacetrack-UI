@@ -48,7 +48,7 @@
       <div class="col-9">
         <div v-show="this.activatedModelId !== -1" class="bg-accent ChatHeight">
           <q-scroll-area ref="scrollAreaRef" class="full-width ChatHeight">
-            <div class="row justify-center q-pa-lg"
+            <div class="row justify-center q-px-lg"
                  v-for="message in (this.sessions[activatedModelId] ? this.sessions[activatedModelId].messages : [])">
               <q-chat-message
                 class="q-ma-lg col-12"
@@ -62,7 +62,7 @@
               </q-chat-message>
               <q-card
                 v-else
-                class="bg-white col-6"
+                class="bg-white col-6 q-my-lg"
               >
                 <q-card-section>
                   <div :class="['text-h4', 'text-'+RESULT_COLORS[message.result]]">
@@ -355,7 +355,7 @@ export default defineComponent({
       }
       let absIndex = index + isn;
       if (index < 0) {
-        absIndex = this.sessions[modelId].maxMessageIndex;
+        absIndex = this.sessions[modelId].maxMessageIndex + 1;
       }
       if (absIndex > this.sessions[modelId].maxMessageIndex) {
         this.sessions[modelId].maxMessageIndex = absIndex;
@@ -364,9 +364,11 @@ export default defineComponent({
         index: index,
         type: type,
         result: result,
-        content: content,
-        htmlContent: markdownToHtml(content)
+        content: content
       };
+      if(type !== MESSAGE_TYPE.SYSTEM){
+        this.sessions[modelId].messages[absIndex].htmlContent = markdownToHtml(content);
+      }
       this.$nextTick(() => {
         if (absIndex === this.sessions[modelId].maxMessageIndex) {
           const abstract = (type === MESSAGE_TYPE.REPLY ? this.models[modelId].name + ":" : "") + content;
