@@ -1,0 +1,30 @@
+// app global css in SCSS form
+.activeModel{
+  font-weight: bold;
+  background-color: #d3d3db;
+  color: #1a237e;
+}
+
+.activeModel2{
+  font-weight: bold;
+  background-color: #d4d9d4;
+  color: #1b5e20;
+}
+
+.questionDescBox{
+  height: 150px;
+  padding-top: 17px;
+  line-height: 18px;
+  -webkit-user-select: auto;
+  user-select: auto;
+  font-weight: 400;
+  letter-spacing: 0.00937em;
+  text-decoration: inherit;
+  text-transform: inherit;
+  border: none;
+  border-radius: 0;
+  background: none;
+  color: rgba(0, 0, 0, 0.87);
+  outline: 0;
+  resize: none !important;
+}
